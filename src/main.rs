@@ -1,6 +1,29 @@
+// I just don't like having to use multiple lines for if statements that could be done without multiple lines/curly braces uwu
+macro_rules! ternary {
+    ($c:expr, $v:expr, $v1:expr) => {
+        if $c {$v} else {$v1}
+    };
+}
 
+const ERR_NO: u32 = 0;
+const ERR_GENERIC: u32 = 1;
+const ERR_NOFILE: u32 = 2;
+const ERR_NOARG: u32 = 3;
+const ERR_NOLOGFILE: u32 = 4;
 
-fn help() {
+static CHARACTER_ARRAY: &'static [char] = &[' ', '!', '"', '#', '$', '%', '&', '\'', '(', ')', '*', '+', ',', '-', '.', '/', '0',
+                                            '1', '2', '3', '4', '5', '6', '7', '8', '9', ':', ';', '<', '=', '>', '?', '@',
+                                            'a', 'b', 'c', 'd', 'e', 'f', 'g', 'h', 'i', 'j', 'k', 'l', 'm', 'n', 'o', 'p',
+                                            'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '[', '\\', ']', '^', '_', '`',
+                                            '{', '|', '}', '~'];
+
+static _SUM: u32 = 0;
+static _YEP: u32 = 0;
+
+static _LOGFILEPROVIDED: bool = false;
+const _DEBUG: bool = false;
+
+fn help() -> () {
     println!("\nUse: cralph [options] [input]\n");
     println!("Available [options] are:");
     println!("\t\t\t--file");
@@ -12,12 +35,21 @@ fn help() {
     std::process::exit(0);
 }
 
+fn error_handler(exit_code: u32) -> () {
+    ternary! (exit_code == ERR_NOFILE, println!("File does not exist or is otherwise unavailable\nTry supplying a (valid) filename"),
+    ternary! (exit_code == ERR_NOLOGFILE, println!("No (valid) location/name for output logfile provided"),
+    ternary! (exit_code == ERR_NOARG, println!("Not enough arguments given, use cralph --help or cralph -h to see syntax"), ())));
+}
+
 fn main() {
     let argv: Vec<String> = std::env::args().collect();
-    let argc: usize = argv.iter().count();
+    let _argc: usize = argv.iter().count();
 
-    let _character_array: Vec<u8> = vec![1, 2, 3];
+    let count_array_size = CHARACTER_ARRAY.iter().count();
+    let /*mut*/ count: Vec<u32> = vec![0; count_array_size];
 
-    dbg!(argc);
-    if argv[1] == "--help" { help(); }
+    ternary!(argv[1] == "--help", help(), ());
+    for i in 0..count_array_size {
+        ternary!(!count[i] == 0, println!("Character '{}': {}", CHARACTER_ARRAY[i], count[i]), ());
+    }
 }
