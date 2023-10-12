@@ -5,11 +5,14 @@ macro_rules! ternary {
     };
 }
 
-const ERR_GENERIC: i32 = 1;
-const ERR_NOFILE: i32 = 2;
-const ERR_NOARG: i32 = 3;
-const ERR_BADARG: i32 = 4;
-const ERR_NOLOGFILE: i32 = 5;
+const ERR_GENERIC: isize = 1;
+const ERR_NOFILE: isize = 2;
+const ERR_NOLOGFILE: isize = 3;
+const ERR_NOTEXT: isize = 4;
+const ERR_NOARG: isize = 5;
+const ERR_BADARG: isize = 6;
+const ERR_NOWAY: isize = 255;         // This error is not supposed to be reached and is a placeholder :3
+                                    // It's a placeholder for ERR_GENERIC, really. I use it when a possibility for an error is based on cosmic chance and not by user input.
 
 static CHARACTER_ARRAY: &'static [char] = &[' ', '!', '"', '#', '$', '%', '&', '\'', '(', ')', '*', '+', ',', '-', '.', '/', '0',
                                             '1', '2', '3', '4', '5', '6', '7', '8', '9', ':', ';', '<', '=', '>', '?', '@',
@@ -33,15 +36,17 @@ fn help() -> () {
     std::process::exit(0);
 }
 
-fn error_handler(exit_code: i32) -> () {
+fn error_handler(exit_code: isize) -> () {
     match exit_code {
         ERR_NOFILE => println!("File does not exist or is otherwise unavailable\nTry supplying a (valid) filename"),
         ERR_NOLOGFILE => println!("No (valid) location/name for output logfile provided"),
+        ERR_NOTEXT => println!("No text was provided. Provide a text, preferably 'in quotes', with --text"),
         ERR_NOARG => println!("Not enough arguments given, use cralph --help or cralph -h to see syntax"),
         ERR_BADARG => println!("Bad argument given. Use cralph --help or cralph -h to see syntax"),
-        _ => println!("Generic or unimplemented error"),
+        ERR_NOWAY => println!("This error was not supposed to be reached."),
+        ERR_GENERIC | _ => println!("Generic or unimplemented error"),
     }
-    std::process::exit(exit_code);
+    std::process::exit(i32::try_from(exit_code).ok().unwrap());
 }
 
 fn argument_handler(argc: usize, argv: Vec<String>) -> () {
@@ -53,15 +58,32 @@ fn argument_handler(argc: usize, argv: Vec<String>) -> () {
     }
 }
 
-fn file_handler(argv: Vec<String>) -> i32 {
-    if let Ok(input_file) = std::fs::File::open(&argv[4]) {
+fn file_handler(argv: Vec<String>) -> isize {
+    if let Ok(input_file) = std::fs::File::open(&argv[2]) {
         return 0;
     }
     error_handler(ERR_NOFILE);
     return ERR_NOFILE;                                      // This line is so incredibly useless (due to error_handler outright combusting) but cargo wouldn't compile without it
 }
 
-fn count_characters (mode: String, argv: Vec<String>) -> () {
+fn count_characters (mode: String, argv: Vec<String>, count_array_size: i32) -> () {
+    match mode.as_str() {
+        "file" => if file_handler(argv) == 0 {
+            for i in 0..count_array_size {
+                ();
+            }
+        },
+        "text" => {
+            if argv.get(2) == None { error_handler(ERR_NOTEXT) };
+            for i in 0..count_array_size {
+                for k in 0..argv[2].chars().count() {
+                    let mut character = argv[2].chars().nth(k).unwrap();
+                    if character == CHARACTER_ARRAY[k] || character == CHARACTER_ARRAY[k].to_ascii_uppercase() { dbg!(i, character); }
+                };
+            }
+        },
+        _ => error_handler(ERR_NOWAY),
+    }
 }
 
 fn main() {
@@ -71,12 +93,12 @@ fn main() {
     argument_handler(argc, argv.clone());
 
     let count_array_size = CHARACTER_ARRAY.iter().count();
-    let /*mut*/ count: Vec<u32> = vec![0; count_array_size];
+    let /*mut*/ count: Vec<usize> = vec![0; count_array_size];
 
     match first_argument.as_str() {
         "--help" | "-h" => help(),
-        "--file" | "-f" => count_characters("file".to_string(), argv),
-        "--text" | "-t" => count_characters("text".to_string(), argv),
+        "--file" | "-f" => count_characters("file".to_string(), argv, count_array_size.try_into().unwrap()),
+        "--text" | "-t" => count_characters("text".to_string(), argv, count_array_size.try_into().unwrap()),
         _ => error_handler(ERR_BADARG),
     }
 
