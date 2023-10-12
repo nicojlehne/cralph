@@ -20,8 +20,6 @@ static CHARACTER_ARRAY: &'static [char] = &[' ', '!', '"', '#', '$', '%', '&', '
                                             'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '[', '\\', ']', '^', '_', '`',
                                             '{', '|', '}', '~'];
 
-static _SUM: u32 = 0;
-
 static mut LOGFILEPROVIDED: bool = false;
 
 fn help() -> () {
@@ -76,9 +74,9 @@ fn count_characters (mode: String, count: &mut Vec<usize>, argv: Vec<String>, co
         "text" => {
             if argv.get(2) == None { error_handler(ERR_NOTEXT) };
             let mut x: usize = 0;                                   // This little shit line is needed cause i is not a usize, thank me never ùwú
-            for i in 0..count_array_size {
+            for _i in 0..count_array_size {
                 for k in 0..argv[2].chars().count() {
-                    let mut character = argv[2].chars().nth(k).unwrap();
+                    let character = argv[2].chars().nth(k).unwrap();
                     //println!("character: {} character up: {} arraypos: {} comp: {}", character, character.to_ascii_uppercase(), CHARACTER_ARRAY[x], (CHARACTER_ARRAY[x] == character));
                     if character == CHARACTER_ARRAY[x] || character == CHARACTER_ARRAY[x].to_ascii_uppercase() { count[x] += 1; }
                 };
@@ -86,6 +84,19 @@ fn count_characters (mode: String, count: &mut Vec<usize>, argv: Vec<String>, co
             }
         },
         _ => error_handler(ERR_NOWAY),
+    }
+    sum_it_up (count, count_array_size);
+}
+
+fn sum_it_up (count: &mut Vec<usize>, count_array_size: isize) -> () {
+    let mut sum: usize = 0;
+    let mut x: usize = 0;
+    for _i in 0..count_array_size {
+        sum += count[x];
+        if !(count[x] == 0) {
+            println!("{}: {}", CHARACTER_ARRAY[x], count[x]);
+        }
+        x += 1;
     }
 }
 
@@ -100,8 +111,8 @@ fn main() {
 
     match first_argument.as_str() {
         "--help" | "-h" => help(),
-        "--file" | "-f" => count_characters("file".to_string(), &mut count, argv, count_array_size.try_into().unwrap()),
-        "--text" | "-t" => count_characters("text".to_string(), &mut count, argv, count_array_size.try_into().unwrap()),
+        "--file" | "-f" => count_characters("file".to_string(), &mut count, argv, count_array_size.try_into().unwrap()),    // Random bullshit, Go!
+        "--text" | "-t" => count_characters("text".to_string(), &mut count, argv, count_array_size.try_into().unwrap()),    // I don't know why this works, thanks compiler! :3
         _ => error_handler(ERR_BADARG),
     }
 
