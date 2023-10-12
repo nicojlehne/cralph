@@ -5,7 +5,6 @@ macro_rules! ternary {
     };
 }
 
-const ERR_NO: i32 = 0;
 const ERR_GENERIC: i32 = 1;
 const ERR_NOFILE: i32 = 2;
 const ERR_NOARG: i32 = 3;
@@ -57,15 +56,22 @@ fn file_handler(argv: Vec<String>) -> i32 {
     return ERR_NOFILE;                                      // This line is so incredibly useless (due to error_handler outright combusting) but cargo wouldn't compile without it
 }
 
+fn count_characters (mode: String, argv: Vec<String>) -> () {
+
+}
+
 fn main() {
     let argv: Vec<String> = std::env::args().collect();
-    let _argc: usize = argv.iter().count();
+    let argc: usize = argv.iter().count();
 
     let count_array_size = CHARACTER_ARRAY.iter().count();
     let /*mut*/ count: Vec<u32> = vec![0; count_array_size];
+
+    argument_handler(argc, argv.clone());
 
     ternary!(argv[1] == "--help", help(), ());
     for i in 0..count_array_size {
         ternary!(!count[i] == 0, println!("Character '{}': {}", CHARACTER_ARRAY[i], count[i]), ());
     }
+
 }
