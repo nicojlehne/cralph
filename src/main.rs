@@ -43,40 +43,41 @@ fn argument_handler(argc: usize, argv: Vec<String>) -> bool {
     if argc > 4 {
         if argv[3] == "--log" || argv[3] == "-l" {
             //if let Ok(input_file) = std::fs::File::open(&argv[4]) { return true; } else {error_handler(ERR_NOLOGFILE)}
-            dbg!(&argv[4]);
-            let logfile = std::fs::OpenOptions::new().create(true).truncate(true).write(true).append(true).open(&argv[4]).unwrap();
+            let logfile = std::fs::OpenOptions::new().create(true).append(true).open(&argv[4]);
+            let _a = match logfile {
+                Ok(_) => return true,
+                Err(e) => println!("Error accessing file {}", e),
+            };
         }
     }
     return false;
 }
 
-fn file_handler(argv: Vec<String>, where_is_filename: usize) -> isize {
-    if let Ok(input_file) = std::fs::File::open(&argv[where_is_filename]) {
-        drop(input_file);
-        return 0;
-    }
-    let input_file = std::fs::OpenOptions::new().create(true).write(true).append(true).open(&argv[where_is_filename]).unwrap();
-    dbg!(input_file);
-    error_handler(ERR_NOFILE);
-    return ERR_NOFILE;                                      // This line is so incredibly useless (due to error_handler outright combusting) but cargo wouldn't compile without it
+fn file_handler(argv: Vec<String>, where_is_filename: usize) -> bool {
+    let input_file = std::fs::OpenOptions::new().read(true).open(&argv[where_is_filename]);
+    let _a = match input_file {
+        Ok(_) => return true,
+        Err(e) => println!("Error accessing file {}: {}", &argv[where_is_filename], e),
+    };
+    return false;                                      // This line is so incredibly useless (due to error_handler outright combusting) but cargo wouldn't compile without it
 }
 
 fn count_characters (mode: String, count: &mut Vec<usize>, argv: Vec<String>, count_array_size: isize, logfile_provided: bool) -> () {
     match mode.as_str() {
-        "file" => if file_handler(argv, 2) == 0 {
+        "file" => if file_handler(argv, 2) == true {
             for _i in 0..count_array_size {
                 ();
             }
-        },
+        } else {error_handler(ERR_NOFILE);},
         "text" => {
             if argv.get(2) == None { error_handler(ERR_NOTEXT) };
-            let mut x: usize = 0;                                   // This little shit line is needed cause i is not a usize, thank me never ùwú
+            let mut index: usize = 0;                                   // This little shit line is needed cause i is not a usize, thank me never ùwú
             for _i in 0..count_array_size {
                 for k in 0..argv[2].chars().count() {
                     let character = argv[2].chars().nth(k).unwrap();
-                    if character == CHARACTER_ARRAY[x] || character == CHARACTER_ARRAY[x].to_ascii_uppercase() { count[x] += 1; }
+                    if character == CHARACTER_ARRAY[index] || character == CHARACTER_ARRAY[index].to_ascii_uppercase() { count[index] += 1; }
                 };
-                x += 1;
+                index += 1;
             }
         },
         _ => error_handler(ERR_NOWAY),
@@ -86,13 +87,16 @@ fn count_characters (mode: String, count: &mut Vec<usize>, argv: Vec<String>, co
 
 fn sum_it_up (count: &mut Vec<usize>, count_array_size: isize, logfile_provided: bool) -> () {
     let mut sum: usize = 0;
-    let mut x: usize = 0;
+    let mut index: usize = 0;
     for _i in 0..count_array_size {
-        sum += count[x];
-        if !(count[x] == 0) {
-            println!("{}: {}", CHARACTER_ARRAY[x], count[x]);
+        sum += count[index];
+        if !(count[index] == 0) {
+            println!("{}: {}", CHARACTER_ARRAY[index], count[index]);
+            if logfile_provided {
+
+            }
         }
-        x += 1;
+        index += 1;
     }
     println!("Sum: {} characters\nSum (without spaces): {}", sum, sum-count[0]);
 }
