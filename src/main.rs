@@ -66,7 +66,7 @@ fn file_handler(argv: Vec<String>) -> isize {
     return ERR_NOFILE;                                      // This line is so incredibly useless (due to error_handler outright combusting) but cargo wouldn't compile without it
 }
 
-fn count_characters (mode: String, argv: Vec<String>, count_array_size: i32) -> () {
+fn count_characters (mode: String, count: &mut Vec<usize>, argv: Vec<String>, count_array_size: isize) -> () {
     match mode.as_str() {
         "file" => if file_handler(argv) == 0 {
             for i in 0..count_array_size {
@@ -75,11 +75,14 @@ fn count_characters (mode: String, argv: Vec<String>, count_array_size: i32) -> 
         },
         "text" => {
             if argv.get(2) == None { error_handler(ERR_NOTEXT) };
+            let mut x: usize = 0;                                   // This little shit line is needed cause i is not a usize, thank me never ùwú
             for i in 0..count_array_size {
                 for k in 0..argv[2].chars().count() {
                     let mut character = argv[2].chars().nth(k).unwrap();
-                    if character == CHARACTER_ARRAY[k] || character == CHARACTER_ARRAY[k].to_ascii_uppercase() { dbg!(i, character); }
+                    //println!("character: {} character up: {} arraypos: {} comp: {}", character, character.to_ascii_uppercase(), CHARACTER_ARRAY[x], (CHARACTER_ARRAY[x] == character));
+                    if character == CHARACTER_ARRAY[x] || character == CHARACTER_ARRAY[x].to_ascii_uppercase() { count[x] += 1; }
                 };
+                x += 1;
             }
         },
         _ => error_handler(ERR_NOWAY),
@@ -93,17 +96,16 @@ fn main() {
     argument_handler(argc, argv.clone());
 
     let count_array_size = CHARACTER_ARRAY.iter().count();
-    let /*mut*/ count: Vec<usize> = vec![0; count_array_size];
+    let mut count: Vec<usize> = vec![0; count_array_size];
 
     match first_argument.as_str() {
         "--help" | "-h" => help(),
-        "--file" | "-f" => count_characters("file".to_string(), argv, count_array_size.try_into().unwrap()),
-        "--text" | "-t" => count_characters("text".to_string(), argv, count_array_size.try_into().unwrap()),
+        "--file" | "-f" => count_characters("file".to_string(), &mut count, argv, count_array_size.try_into().unwrap()),
+        "--text" | "-t" => count_characters("text".to_string(), &mut count, argv, count_array_size.try_into().unwrap()),
         _ => error_handler(ERR_BADARG),
     }
 
     for i in 0..count_array_size {
         ternary!(!count[i] == 0, println!("Character '{}': {}", CHARACTER_ARRAY[i], count[i]), ());
     }
-
 }
