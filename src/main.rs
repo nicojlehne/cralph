@@ -20,8 +20,6 @@ static CHARACTER_ARRAY: &'static [char] = &[' ', '!', '"', '#', '$', '%', '&', '
                                             'q', 'r', 's', 't', 'u', 'v', 'w', 'x', 'y', 'z', '[', '\\', ']', '^', '_', '`',
                                             '{', '|', '}', '~'];
 
-static mut LOGFILEPROVIDED: bool = false;
-
 fn help() -> () {
     println!("\nUse: cralph [options] [input]\n");
     println!("Available [options] are:");
@@ -47,13 +45,14 @@ fn error_handler(exit_code: isize) -> () {
     std::process::exit(i32::try_from(exit_code).ok().unwrap());
 }
 
-fn argument_handler(argc: usize, argv: Vec<String>) -> () {
+fn argument_handler(argc: usize, argv: Vec<String>) -> bool {
     if !(argc > 1) {error_handler(ERR_NOARG)};
     if argc > 3 {
         if argv[3] == "--log" || argv[3] == "-l" {
-            if let Ok(input_file) = std::fs::File::open(&argv[4]) { unsafe {LOGFILEPROVIDED = true}; } else {error_handler(ERR_NOLOGFILE)}
+            if let Ok(input_file) = std::fs::File::open(&argv[4]) { /*unsafe {LOGFILEPROVIDED = true};*/ return true; } else {error_handler(ERR_NOLOGFILE)}
         }
     }
+    return false;
 }
 
 fn file_handler(argv: Vec<String>) -> isize {
@@ -97,12 +96,14 @@ fn sum_it_up (count: &mut Vec<usize>, count_array_size: isize) -> () {
         }
         x += 1;
     }
+    println!("Sum: {} characters\nSum (without spaces): {}", sum, sum-count[0]);
 }
 
 fn main() {
     let argv: Vec<String> = std::env::args().collect();
     let argc: usize = argv.iter().count();
     let first_argument: &String = &argv[1];
+    let mut logfile_provided: bool = false;
     argument_handler(argc, argv.clone());
 
     let count_array_size = CHARACTER_ARRAY.iter().count();
