@@ -8,7 +8,8 @@ macro_rules! ternary {
 const ERR_GENERIC: i32 = 1;
 const ERR_NOFILE: i32 = 2;
 const ERR_NOARG: i32 = 3;
-const ERR_NOLOGFILE: i32 = 4;
+const ERR_BADARG: i32 = 4;
+const ERR_NOLOGFILE: i32 = 5;
 
 static CHARACTER_ARRAY: &'static [char] = &[' ', '!', '"', '#', '$', '%', '&', '\'', '(', ')', '*', '+', ',', '-', '.', '/', '0',
                                             '1', '2', '3', '4', '5', '6', '7', '8', '9', ':', ';', '<', '=', '>', '?', '@',
@@ -33,9 +34,13 @@ fn help() -> () {
 }
 
 fn error_handler(exit_code: i32) -> () {
-    ternary! (exit_code == ERR_NOFILE, println!("File does not exist or is otherwise unavailable\nTry supplying a (valid) filename"),
-    ternary! (exit_code == ERR_NOLOGFILE, println!("No (valid) location/name for output logfile provided"),
-    ternary! (exit_code == ERR_NOARG, println!("Not enough arguments given, use cralph --help or cralph -h to see syntax"), ())));
+    match exit_code {
+        ERR_NOFILE => println!("File does not exist or is otherwise unavailable\nTry supplying a (valid) filename"),
+        ERR_NOLOGFILE => println!("No (valid) location/name for output logfile provided"),
+        ERR_NOARG => println!("Not enough arguments given, use cralph --help or cralph -h to see syntax"),
+        ERR_BADARG => println!("Bad argument given. Use cralph --help or cralph -h to see syntax"),
+        _ => println!("Generic or unimplemented error"),
+    }
     std::process::exit(exit_code);
 }
 
@@ -57,19 +62,24 @@ fn file_handler(argv: Vec<String>) -> i32 {
 }
 
 fn count_characters (mode: String, argv: Vec<String>) -> () {
-
 }
 
 fn main() {
     let argv: Vec<String> = std::env::args().collect();
     let argc: usize = argv.iter().count();
+    let first_argument: &String = &argv[1];
+    argument_handler(argc, argv.clone());
 
     let count_array_size = CHARACTER_ARRAY.iter().count();
     let /*mut*/ count: Vec<u32> = vec![0; count_array_size];
 
-    argument_handler(argc, argv.clone());
+    match first_argument.as_str() {
+        "--help" | "-h" => help(),
+        "--file" | "-f" => count_characters("file".to_string(), argv),
+        "--text" | "-t" => count_characters("text".to_string(), argv),
+        _ => error_handler(ERR_BADARG),
+    }
 
-    ternary!(argv[1] == "--help", help(), ());
     for i in 0..count_array_size {
         ternary!(!count[i] == 0, println!("Character '{}': {}", CHARACTER_ARRAY[i], count[i]), ());
     }
