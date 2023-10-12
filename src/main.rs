@@ -1,10 +1,3 @@
-// I just don't like having to use multiple lines for if statements that could be done without multiple lines/curly braces uwu
-macro_rules! ternary {
-    ($c:expr, $v:expr, $v1:expr) => {
-        if $c {$v} else {$v1}
-    };
-}
-
 const ERR_GENERIC: isize = 1;
 const ERR_NOFILE: isize = 2;
 const ERR_NOLOGFILE: isize = 3;
@@ -12,7 +5,7 @@ const ERR_NOTEXT: isize = 4;
 const ERR_NOARG: isize = 5;
 const ERR_BADARG: isize = 6;
 const ERR_NOWAY: isize = 255;         // This error is not supposed to be reached and is a placeholder :3
-                                    // It's a placeholder for ERR_GENERIC, really. I use it when a possibility for an error is based on cosmic chance and not by user input.
+                                      // It's a placeholder for ERR_GENERIC, really. I use it when a possibility for an error is based on cosmic chance and not by user input.
 
 static CHARACTER_ARRAY: &'static [char] = &[' ', '!', '"', '#', '$', '%', '&', '\'', '(', ')', '*', '+', ',', '-', '.', '/', '0',
                                             '1', '2', '3', '4', '5', '6', '7', '8', '9', ':', ';', '<', '=', '>', '?', '@',
@@ -57,16 +50,17 @@ fn argument_handler(argc: usize, argv: Vec<String>) -> bool {
 
 fn file_handler(argv: Vec<String>) -> isize {
     if let Ok(input_file) = std::fs::File::open(&argv[2]) {
+        drop(input_file);
         return 0;
     }
     error_handler(ERR_NOFILE);
     return ERR_NOFILE;                                      // This line is so incredibly useless (due to error_handler outright combusting) but cargo wouldn't compile without it
 }
 
-fn count_characters (mode: String, count: &mut Vec<usize>, argv: Vec<String>, count_array_size: isize) -> () {
+fn count_characters (mode: String, count: &mut Vec<usize>, argv: Vec<String>, count_array_size: isize, logfile_provided: bool) -> () {
     match mode.as_str() {
         "file" => if file_handler(argv) == 0 {
-            for i in 0..count_array_size {
+            for _i in 0..count_array_size {
                 ();
             }
         },
@@ -83,10 +77,10 @@ fn count_characters (mode: String, count: &mut Vec<usize>, argv: Vec<String>, co
         },
         _ => error_handler(ERR_NOWAY),
     }
-    sum_it_up (count, count_array_size);
+    sum_it_up (count, count_array_size, logfile_provided);
 }
 
-fn sum_it_up (count: &mut Vec<usize>, count_array_size: isize) -> () {
+fn sum_it_up (count: &mut Vec<usize>, count_array_size: isize, logfile_provided: bool) -> () {
     let mut sum: usize = 0;
     let mut x: usize = 0;
     for _i in 0..count_array_size {
@@ -103,20 +97,15 @@ fn main() {
     let argv: Vec<String> = std::env::args().collect();
     let argc: usize = argv.iter().count();
     let first_argument: &String = &argv[1];
-    let mut logfile_provided: bool = false;
-    argument_handler(argc, argv.clone());
+    let logfile_provided: bool = argument_handler(argc, argv.clone());
 
     let count_array_size = CHARACTER_ARRAY.iter().count();
     let mut count: Vec<usize> = vec![0; count_array_size];
 
     match first_argument.as_str() {
         "--help" | "-h" => help(),
-        "--file" | "-f" => count_characters("file".to_string(), &mut count, argv, count_array_size.try_into().unwrap()),    // Random bullshit, Go!
-        "--text" | "-t" => count_characters("text".to_string(), &mut count, argv, count_array_size.try_into().unwrap()),    // I don't know why this works, thanks compiler! :3
+        "--file" | "-f" => count_characters("file".to_string(), &mut count, argv, count_array_size.try_into().unwrap(), logfile_provided),    // Random bullshit, Go!
+        "--text" | "-t" => count_characters("text".to_string(), &mut count, argv, count_array_size.try_into().unwrap(), logfile_provided),    // I don't know why this works, thanks compiler! :3
         _ => error_handler(ERR_BADARG),
-    }
-
-    for i in 0..count_array_size {
-        ternary!(!count[i] == 0, println!("Character '{}': {}", CHARACTER_ARRAY[i], count[i]), ());
     }
 }
