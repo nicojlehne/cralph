@@ -14,14 +14,14 @@ static CHARACTER_ARRAY: &'static [char] = &[' ', '!', '"', '#', '$', '%', '&', '
                                             '{', '|', '}', '~'];
 
 fn help() -> () {
-    println!("\nUse: cralph [options] [input]\n");
+    println!("\nUse: cralph [options] [input] [optional: --log]\n");
     println!("Available [options] are:");
     println!("\t\t\t--file");
     println!("\t\t\t\tTo open a file provided as filepath via [input].");
     println!("\t\t\t--text");
-    println!("\t\t\t\tTo open text provided via [input]");
+    println!("\t\t\t\tTo open text provided via [input].");
     println!("\t\t\t--help");
-    println!("\t\t\t\tTo open this\n");
+    println!("\t\t\t\tTo open this.\n");
     std::process::exit(0);
 }
 
@@ -42,24 +42,27 @@ fn argument_handler(argc: usize, argv: Vec<String>) -> bool {
     if !(argc > 1) {error_handler(ERR_NOARG)};
     if argc > 3 {
         if argv[3] == "--log" || argv[3] == "-l" {
-            if let Ok(input_file) = std::fs::File::open(&argv[4]) { /*unsafe {LOGFILEPROVIDED = true};*/ return true; } else {error_handler(ERR_NOLOGFILE)}
+            if let Ok(input_file) = std::fs::File::open(&argv[4]) { return true; } else {error_handler(ERR_NOLOGFILE)}
+            let mut logfile = std::fs::OpenOptions::new().create(true).write(true).append(true).open(&argv[4]).unwrap();
         }
     }
     return false;
 }
 
-fn file_handler(argv: Vec<String>) -> isize {
-    if let Ok(input_file) = std::fs::File::open(&argv[2]) {
+fn file_handler(argv: Vec<String>, where_is_filename: usize) -> isize {
+    if let Ok(input_file) = std::fs::File::open(&argv[where_is_filename]) {
         drop(input_file);
         return 0;
     }
+    let mut input_file = std::fs::OpenOptions::new().create(true).write(true).append(true).open(&argv[where_is_filename]).unwrap();
+    dbg!(input_file);
     error_handler(ERR_NOFILE);
     return ERR_NOFILE;                                      // This line is so incredibly useless (due to error_handler outright combusting) but cargo wouldn't compile without it
 }
 
 fn count_characters (mode: String, count: &mut Vec<usize>, argv: Vec<String>, count_array_size: isize, logfile_provided: bool) -> () {
     match mode.as_str() {
-        "file" => if file_handler(argv) == 0 {
+        "file" => if file_handler(argv, 2) == 0 {
             for _i in 0..count_array_size {
                 ();
             }
