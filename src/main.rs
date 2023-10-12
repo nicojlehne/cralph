@@ -40,10 +40,11 @@ fn error_handler(exit_code: isize) -> () {
 
 fn argument_handler(argc: usize, argv: Vec<String>) -> bool {
     if !(argc > 1) {error_handler(ERR_NOARG)};
-    if argc > 3 {
+    if argc > 4 {
         if argv[3] == "--log" || argv[3] == "-l" {
-            if let Ok(input_file) = std::fs::File::open(&argv[4]) { return true; } else {error_handler(ERR_NOLOGFILE)}
-            let mut logfile = std::fs::OpenOptions::new().create(true).write(true).append(true).open(&argv[4]).unwrap();
+            //if let Ok(input_file) = std::fs::File::open(&argv[4]) { return true; } else {error_handler(ERR_NOLOGFILE)}
+            dbg!(&argv[4]);
+            let logfile = std::fs::OpenOptions::new().create(true).truncate(true).write(true).append(true).open(&argv[4]).unwrap();
         }
     }
     return false;
@@ -54,7 +55,7 @@ fn file_handler(argv: Vec<String>, where_is_filename: usize) -> isize {
         drop(input_file);
         return 0;
     }
-    let mut input_file = std::fs::OpenOptions::new().create(true).write(true).append(true).open(&argv[where_is_filename]).unwrap();
+    let input_file = std::fs::OpenOptions::new().create(true).write(true).append(true).open(&argv[where_is_filename]).unwrap();
     dbg!(input_file);
     error_handler(ERR_NOFILE);
     return ERR_NOFILE;                                      // This line is so incredibly useless (due to error_handler outright combusting) but cargo wouldn't compile without it

@@ -6,4 +6,4 @@ clean:
 	cargo clean
 
 rule: clean all
-	./target/release/cralph --file ./src/main.rs
+	./target/release/cralph --text "abcdefghijklmnopqrstuvwxyzabcdefghijklmnopqrstuvwxyzzz" --log ./a.txt
