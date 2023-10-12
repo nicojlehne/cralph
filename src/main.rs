@@ -77,7 +77,6 @@ fn count_characters (mode: String, count: &mut Vec<usize>, argv: Vec<String>, co
             for _i in 0..count_array_size {
                 for k in 0..argv[2].chars().count() {
                     let character = argv[2].chars().nth(k).unwrap();
-                    //println!("character: {} character up: {} arraypos: {} comp: {}", character, character.to_ascii_uppercase(), CHARACTER_ARRAY[x], (CHARACTER_ARRAY[x] == character));
                     if character == CHARACTER_ARRAY[x] || character == CHARACTER_ARRAY[x].to_ascii_uppercase() { count[x] += 1; }
                 };
                 x += 1;
