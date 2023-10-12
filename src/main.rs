@@ -5,11 +5,11 @@ macro_rules! ternary {
     };
 }
 
-const ERR_NO: u32 = 0;
-const ERR_GENERIC: u32 = 1;
-const ERR_NOFILE: u32 = 2;
-const ERR_NOARG: u32 = 3;
-const ERR_NOLOGFILE: u32 = 4;
+const ERR_NO: i32 = 0;
+const ERR_GENERIC: i32 = 1;
+const ERR_NOFILE: i32 = 2;
+const ERR_NOARG: i32 = 3;
+const ERR_NOLOGFILE: i32 = 4;
 
 static CHARACTER_ARRAY: &'static [char] = &[' ', '!', '"', '#', '$', '%', '&', '\'', '(', ')', '*', '+', ',', '-', '.', '/', '0',
                                             '1', '2', '3', '4', '5', '6', '7', '8', '9', ':', ';', '<', '=', '>', '?', '@',
@@ -18,10 +18,8 @@ static CHARACTER_ARRAY: &'static [char] = &[' ', '!', '"', '#', '$', '%', '&', '
                                             '{', '|', '}', '~'];
 
 static _SUM: u32 = 0;
-static _YEP: u32 = 0;
 
-static _LOGFILEPROVIDED: bool = false;
-const _DEBUG: bool = false;
+static mut LOGFILEPROVIDED: bool = false;
 
 fn help() -> () {
     println!("\nUse: cralph [options] [input]\n");
@@ -35,10 +33,28 @@ fn help() -> () {
     std::process::exit(0);
 }
 
-fn error_handler(exit_code: u32) -> () {
+fn error_handler(exit_code: i32) -> () {
     ternary! (exit_code == ERR_NOFILE, println!("File does not exist or is otherwise unavailable\nTry supplying a (valid) filename"),
     ternary! (exit_code == ERR_NOLOGFILE, println!("No (valid) location/name for output logfile provided"),
     ternary! (exit_code == ERR_NOARG, println!("Not enough arguments given, use cralph --help or cralph -h to see syntax"), ())));
+    std::process::exit(exit_code);
+}
+
+fn argument_handler(argc: usize, argv: Vec<String>) -> () {
+    if !(argc > 1) {error_handler(ERR_NOARG)};
+    if argc > 3 {
+        if argv[3] == "--log" || argv[3] == "-l" {
+            if let Ok(input_file) = std::fs::File::open(&argv[4]) { unsafe {LOGFILEPROVIDED = true}; } else {error_handler(ERR_NOLOGFILE)}
+        }
+    }
+}
+
+fn file_handler(argv: Vec<String>) -> i32 {
+    if let Ok(input_file) = std::fs::File::open(&argv[4]) {
+        return 0;
+    }
+    error_handler(ERR_NOFILE);
+    return ERR_NOFILE;                                      // This line is so incredibly useless (due to error_handler outright combusting) but cargo wouldn't compile without it
 }
 
 fn main() {
