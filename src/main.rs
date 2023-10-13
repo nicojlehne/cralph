@@ -1,3 +1,5 @@
+use std::io::Write;
+
 const ERR_GENERIC: isize = 1;
 const ERR_NOFILE: isize = 2;
 const ERR_NOLOGFILE: isize = 3;
@@ -14,12 +16,12 @@ static CHARACTER_ARRAY: &'static [char] = &[' ', '!', '"', '#', '$', '%', '&', '
                                             '{', '|', '}', '~'];
 
 fn help() -> () {
-    println!("\nUse: cralph [options] [input] [optional: --log]\n");
+    println!("\nUse: cralph [options] <input> [optional: --log]\n");
     println!("Available [options] are:");
     println!("\t\t\t--file");
-    println!("\t\t\t\tTo open a file provided as filepath via [input].");
+    println!("\t\t\t\tTo open a file provided as filepath via <input>.");
     println!("\t\t\t--text");
-    println!("\t\t\t\tTo open text provided via [input].");
+    println!("\t\t\t\tTo open text provided via <input>.");
     println!("\t\t\t--help");
     println!("\t\t\t\tTo open this.\n");
     std::process::exit(0);
@@ -42,19 +44,14 @@ fn argument_handler(argc: usize, argv: Vec<String>) -> bool {
     if !(argc > 1) {error_handler(ERR_NOARG)};
     if argc > 4 {
         if argv[3] == "--log" || argv[3] == "-l" {
-            //if let Ok(input_file) = std::fs::File::open(&argv[4]) { return true; } else {error_handler(ERR_NOLOGFILE)}
-            let logfile = std::fs::OpenOptions::new().create(true).append(true).open(&argv[4]);
-            let _a = match logfile {
-                Ok(_) => return true,
-                Err(e) => println!("Error accessing file {}", e),
-            };
+            return file_handler(argv, 4, true);
         }
     }
     return false;
 }
 
-fn file_handler(argv: Vec<String>, where_is_filename: usize) -> bool {
-    let input_file = std::fs::OpenOptions::new().read(true).open(&argv[where_is_filename]);
+fn file_handler(argv: Vec<String>, where_is_filename: usize, create: bool) -> bool {
+    let input_file = std::fs::OpenOptions::new().create(create || false).append(create || false).read(true).open(&argv[where_is_filename]);
     let _a = match input_file {
         Ok(_) => return true,
         Err(e) => println!("Error accessing file {}: {}", &argv[where_is_filename], e),
@@ -64,7 +61,7 @@ fn file_handler(argv: Vec<String>, where_is_filename: usize) -> bool {
 
 fn count_characters (mode: String, count: &mut Vec<usize>, argv: Vec<String>, count_array_size: isize, logfile_provided: bool) -> () {
     match mode.as_str() {
-        "file" => if file_handler(argv, 2) == true {
+        "file" => if file_handler(argv.clone(), 2, false) == true {
             for _i in 0..count_array_size {
                 ();
             }
@@ -82,10 +79,10 @@ fn count_characters (mode: String, count: &mut Vec<usize>, argv: Vec<String>, co
         },
         _ => error_handler(ERR_NOWAY),
     }
-    sum_it_up (count, count_array_size, logfile_provided);
+    sum_it_up (count, count_array_size, logfile_provided, argv);
 }
 
-fn sum_it_up (count: &mut Vec<usize>, count_array_size: isize, logfile_provided: bool) -> () {
+fn sum_it_up (count: &mut Vec<usize>, count_array_size: isize, logfile_provided: bool, argv: Vec<String>) -> () {
     let mut sum: usize = 0;
     let mut index: usize = 0;
     for _i in 0..count_array_size {
@@ -93,17 +90,23 @@ fn sum_it_up (count: &mut Vec<usize>, count_array_size: isize, logfile_provided:
         if !(count[index] == 0) {
             println!("{}: {}", CHARACTER_ARRAY[index], count[index]);
             if logfile_provided {
-
+                let mut logfile = std::fs::OpenOptions::new().append(true).open(&argv[4]).unwrap();
+                write!(logfile, "{}: {}\n", CHARACTER_ARRAY[index], count[index]).ok();
             }
         }
         index += 1;
     }
     println!("Sum: {} characters\nSum (without spaces): {}", sum, sum-count[0]);
+    if logfile_provided {
+        let mut logfile = std::fs::OpenOptions::new().append(true).open(&argv[4]).unwrap();
+        write!(logfile, "Sum: {} characters\nSum (without spaces): {}\n", sum, sum-count[0]).ok();
+    }
 }
 
 fn main() {
     let argv: Vec<String> = std::env::args().collect();
     let argc: usize = argv.iter().count();
+    if argc <= 1 { error_handler(ERR_NOARG); }
     let first_argument: &String = &argv[1];
     let logfile_provided: bool = argument_handler(argc, argv.clone());
 
